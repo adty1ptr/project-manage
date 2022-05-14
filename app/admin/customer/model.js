@@ -11,8 +11,9 @@ const Customer = function(cust) {
 }
 
 Customer.create = async (datas, result) => {
-    const cust = new Customer(datas);
+    let cust = new Customer(datas.company);
     let custId
+    cust = { ...cust, isActive: true }
     await knex('customers').insert(cust).returning('id')
         .then(([id]) => {
             custId = parseInt(id.id)
@@ -51,6 +52,54 @@ Customer.create = async (datas, result) => {
                 result(null, data);
             })
         })
+}
+
+Customer.getAll = async (query, result) => {
+    let { sortBy = 'id', sortDesc = 'DESC', page = 1, itemsPerPage = 10 } = query
+
+    let sortData = []
+    if (Array.isArray(sortBy)) {
+        console.log("here")
+        for(var i = 0; i < sortBy.length; i++) {
+            sortData.push({
+                column: sortBy[i],
+                order: (sortDesc[i] == 'true') ? 'DESC' : 'ASC',
+            })
+        }
+    } else {
+        sortData.push({
+            column: sortBy,
+            order: sortDesc,
+        })
+    }
+
+    var pagination = {}
+    if (page < 1) page = 1
+    var offset = (page -1 ) * itemsPerPage
+
+    return Promise.all([
+        knex('customers').count('* as count').first(),
+        knex.select('customers.*')
+            .from('customers')
+            .leftJoin('pm_customer', 'customers.id', 'pm_customer.pm_id')
+            .leftJoin('users as pm', 'pm.id', 'pm_customer.pm_id')
+    ]).then(([total, rows]) => {
+        var count = total.count
+        console.log(count);
+        var rows = rows
+        pagination.total = count;
+        pagination.itemsPerPage = itemsPerPage;
+        pagination.offset = offset;
+        pagination.to = offset + rows.length;
+        pagination.last_page = Math.ceil(count / itemsPerPage);
+        pagination.current_page = page;
+        pagination.from = offset;
+        pagination.data = rows;
+
+        result(null, pagination)
+    }).catch ( (err) => {
+        result(null, err)
+    })
 }
 
 module.exports = Customer;

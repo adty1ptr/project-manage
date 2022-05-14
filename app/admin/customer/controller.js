@@ -12,6 +12,16 @@ async function add(req, res) {
     })
 }
 
+async function getAll (req, res) {
+    Customer.getAll(req.query, (err, data) => {
+        if (err)
+            response.err(err.message, res);
+        else
+            response.ok(data, res);
+    })
+}
+
 module.exports = {
     add,
+    getAll,
 }
