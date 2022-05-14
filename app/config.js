@@ -3,6 +3,8 @@ require('dotenv').config();
 module.exports = {
     serviceName : process.env.SERVICE_NAME,
     port: process.env.PORT,
+    mode: process.env.ENV_MODE,
+    secretKey: process.env.SECRET_KEY,
 
     // DB Config
     dbHost: process.env.DB_HOST,
